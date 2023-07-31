@@ -1,6 +1,7 @@
 package com.kotlin.chatapp.data.remote
 
 import com.kotlin.chatapp.domain.model.AuthUserResponse
+import com.kotlin.chatapp.domain.model.ChatCreatedModel
 import com.kotlin.chatapp.domain.model.ChatsModel
 import com.kotlin.chatapp.domain.model.CreateChatModel
 import com.kotlin.chatapp.domain.model.CreateUser
@@ -30,7 +31,7 @@ interface ChatAppService {
 
     suspend fun acceptOrDecline(reqBody: SendRequestModel, token: String, accept: Boolean) : Resource<FriendsModel>
 
-    suspend fun createChat(reqBody: CreateChatModel, token: String) : Resource<FriendsModel>
+    suspend fun createChat(reqBody: CreateChatModel, token: String) : Resource<ChatCreatedModel>
 
     suspend fun getUsers(user_uuid: String, token: String, searchQuery: String) : Resource<FriendsModel>
 

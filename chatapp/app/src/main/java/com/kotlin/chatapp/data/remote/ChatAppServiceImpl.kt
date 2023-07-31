@@ -7,6 +7,7 @@ import com.kotlin.chatapp.data.remote.dto.MessageDto
 import com.kotlin.chatapp.data.remote.dto.MessagesDto
 import com.kotlin.chatapp.di.AppModule
 import com.kotlin.chatapp.domain.model.AuthUserResponse
+import com.kotlin.chatapp.domain.model.ChatCreatedModel
 import com.kotlin.chatapp.domain.model.ChatsModel
 import com.kotlin.chatapp.domain.model.CreateChatModel
 import com.kotlin.chatapp.domain.model.CreateUser
@@ -63,8 +64,7 @@ class ChatAppServiceImpl(
                 contentType(ContentType.Application.Json)
             }
             when (response.status) {
-                201 -> Resource.Success(response)
-                401 -> Resource.Error(response.message)
+                200 -> Resource.Success(response)
                 else -> Resource.Error(response.message)
             }
         } catch (e: Exception) {
@@ -88,6 +88,7 @@ class ChatAppServiceImpl(
                 else -> Resource.Error(response.message)
             }
         } catch (e: Exception) {
+            println(e.localizedMessage)
             Resource.Error("Something went wrong!")
         }
     }
@@ -191,18 +192,20 @@ class ChatAppServiceImpl(
         }
     }
 
-    override suspend fun createChat(reqBody: CreateChatModel, token: String): Resource<FriendsModel> {
+    override suspend fun createChat(reqBody: CreateChatModel, token: String): Resource<ChatCreatedModel> {
         return try {
             val url = ChatAppService.Endpoints.CreateChat.url
-            val response = client.post<FriendsModel>(url) {
+            val response = client.post<ChatCreatedModel>(url) {
                 header("Authorization", token)
                 body = reqBody
+                contentType(ContentType.Application.Json)
             }
             when (response.status) {
                 201 -> Resource.Success(response)
                 else -> Resource.Error(response.message)
             }
         } catch (e: Exception) {
+            println(e.localizedMessage)
             Resource.Error("Something went wrong!")
         }
     }

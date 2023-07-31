@@ -3,6 +3,8 @@ package com.kotlin.chatapp.presentation.features.main.friends
 import androidx.lifecycle.viewModelScope
 import com.kotlin.chatapp.data.remote.ChatAppService
 import com.kotlin.chatapp.data.remote.dto.UserModelDto
+import com.kotlin.chatapp.domain.model.ChatInfo
+import com.kotlin.chatapp.domain.model.CreateChatModel
 import com.kotlin.chatapp.domain.model.SendRequestModel
 import com.kotlin.chatapp.presentation.core.BaseViewModel
 import com.kotlin.chatapp.presentation.core.ViewAction
@@ -21,6 +23,7 @@ sealed class FriendsPageAction : ViewAction {
     data class AcceptOrDecline(val user_to_send_uuid: String, val accept: Boolean) :
         FriendsPageAction()
     object GetUsers : FriendsPageAction()
+    data class CreateChat(val friend_uuid: String) : FriendsPageAction()
 }
 
 @HiltViewModel
@@ -37,7 +40,9 @@ class FriendsPageViewModel @Inject constructor(
         val fetchedUsers: List<UserModelDto> = emptyList(),
         val isSuccess: IsSuccess = IsSuccess.NONE,
         val errorMessage: String = "",
-        val searchQuery: String = ""
+        val searchQuery: String = "",
+        val chatInfo: ChatInfo? = null,
+        val chatCreated: Boolean = false
     ) : ViewState
 
     private fun fetchFriends() {
@@ -187,6 +192,37 @@ class FriendsPageViewModel @Inject constructor(
         }
     }
 
+    private fun createChat(friend_uuid: String) {
+        commit(state.value.copy(isSuccess = IsSuccess.LOADING))
+        viewModelScope.launch {
+            val reqBody = CreateChatModel(
+                user_uuid = state.value.user_uuid,
+                friend_uuid = friend_uuid
+            )
+            val response = chatAppService.createChat(reqBody, state.value.token)
+            when (response) {
+                is Resource.Success -> {
+                    commit(
+                        state.value.copy(
+                            isSuccess = IsSuccess.SUCCESS,
+                            chatCreated = true,
+                            chatInfo = response.data?.data ?: null
+                        )
+                    )
+                }
+
+                is Resource.Error -> {
+                    commit(
+                        state.value.copy(
+                            isSuccess = IsSuccess.ERROR,
+                            errorMessage = response.data?.message ?: "Unknown error!"
+                        )
+                    )
+                }
+            }
+        }
+    }
+
     override fun dispatch(action: FriendsPageAction) {
         when (action) {
             is FriendsPageAction.GetFriends -> fetchFriends()
@@ -197,6 +233,7 @@ class FriendsPageViewModel @Inject constructor(
                 action.accept
             )
             is FriendsPageAction.GetUsers -> fetchUsers()
+            is FriendsPageAction.CreateChat -> createChat(action.friend_uuid)
         }
     }
 

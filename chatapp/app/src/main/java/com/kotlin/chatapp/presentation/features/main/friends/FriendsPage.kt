@@ -1,5 +1,6 @@
 package com.kotlin.chatapp.presentation.features.main.friends
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.kotlin.chatapp.data.remote.dto.UserModelDto
+import com.kotlin.chatapp.presentation.navigation.Screens
 import com.kotlin.chatapp.presentation.theme.ChatAppTypo
 import com.kotlin.chatapp.storage.SharedPrefs
 import com.kotlin.chatapp.utils.IsSuccess
@@ -48,6 +50,7 @@ import com.kotlin.chatapp.utils.IsSuccess
 @Composable
 fun FriendsPage(
     navController: NavController,
+    mainPAgeNavController: NavController,
     viewModel: FriendsPageViewModel = hiltViewModel()
 ) {
     val state = viewModel.state.value
@@ -67,6 +70,9 @@ fun FriendsPage(
         if (state.isSuccess == IsSuccess.NONE && state.token != "") {
             viewModel.dispatch(FriendsPageAction.GetFriends)
             viewModel.dispatch(FriendsPageAction.GetRequests)
+        }
+        if (state.isSuccess == IsSuccess.SUCCESS && state.chatCreated && state.chatInfo != null) {
+            navController.navigate(Screens.ChatPage.route + "/${state.chatInfo.chat_uuid}/${state.chatInfo.chatname}")
         }
     }
 
@@ -214,6 +220,9 @@ fun friendsListTile(friend: UserModelDto, viewModel: FriendsPageViewModel) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable {
+                viewModel.dispatch(FriendsPageAction.CreateChat(friend_uuid = friend.uuid))
+            }
             .padding(vertical = 8.dp),
     ) {
         Text(

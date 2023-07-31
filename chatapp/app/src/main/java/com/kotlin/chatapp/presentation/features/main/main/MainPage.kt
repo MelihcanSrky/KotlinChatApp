@@ -136,7 +136,7 @@ fun MainPage(
                     ChatsPage(navController = navController)
                 }
                 composable(Screens.FriendsPage.route) {
-                    FriendsPage(navController = mainPageNavController)
+                    FriendsPage(navController = navController, mainPageNavController)
                 }
             }
         }

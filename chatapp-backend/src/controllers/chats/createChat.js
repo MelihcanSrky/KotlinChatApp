@@ -29,7 +29,7 @@ const createChat = async (req, res, next) => {
         res.status(201).json({
             status: 201,
             message: 'chat created',
-            data: null
+            data: user.rows[0]
         })
     } catch (error) {
         next(error);
