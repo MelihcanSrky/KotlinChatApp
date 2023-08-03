@@ -51,7 +51,7 @@ class ChatsPageViewModel @Inject constructor(
                     commit(
                         state.value.copy(
                             isSuccess = IsSuccess.ERROR,
-                            errorMessage = response.data?.message ?: "Unknown error!"
+                            errorMessage = response.data?.message ?: "Server side error!"
                         )
                     )
                 }

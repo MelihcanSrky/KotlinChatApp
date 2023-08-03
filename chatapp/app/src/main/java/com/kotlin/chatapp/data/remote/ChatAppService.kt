@@ -37,7 +37,7 @@ interface ChatAppService {
 
 
     companion object {
-        const val BASE_URL = "http://192.168.1.84:5000"
+        const val BASE_URL = "http://192.168.1.86:5000"
     }
 
     sealed class Endpoints(val url: String) {

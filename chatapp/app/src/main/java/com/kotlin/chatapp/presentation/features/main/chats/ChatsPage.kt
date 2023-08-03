@@ -2,6 +2,7 @@ package com.kotlin.chatapp.presentation.features.main.chats
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -25,6 +26,9 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.navigation.NavController
+import com.kotlin.chatapp.domain.model.ChatsDataModel
+import com.kotlin.chatapp.presentation.features.main.chats.components.ChatsListTile
+import com.kotlin.chatapp.presentation.features.main.chats.components.ErrorText
 import com.kotlin.chatapp.presentation.navigation.Screens
 import com.kotlin.chatapp.presentation.theme.ChatAppTypo
 import com.kotlin.chatapp.storage.SharedPrefs
@@ -48,8 +52,6 @@ fun ChatsPage(
         }
     }
 
-
-
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -57,37 +59,13 @@ fun ChatsPage(
     ) {
         if (state.chats.isNotEmpty()) {
             items(state.chats) { chat ->
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            navController.navigate(Screens.ChatPage.route + "/${chat.chatUuid}/${chat.chatname}")
-                        }
-                        .padding(vertical = 8.dp),
-                ) {
-                    Text(
-                        text = chat.chatname, color = MaterialTheme.colorScheme.onTertiary, style = ChatAppTypo.headlineSmall
-                    )
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = chat.lastMessage ?: "...",
-                            color = MaterialTheme.colorScheme.onTertiary,
-                            style = ChatAppTypo.bodyMedium
-                        )
-                        Text(
-                            text = chat.lastMessageAt ?: "...",
-                            color = MaterialTheme.colorScheme.onTertiary,
-                            style = ChatAppTypo.bodySmall
-                        )
-                    }
-                }
-                Divider(color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.2f))
+                ChatsListTile(navController = navController, chat = chat)
+            }
+        } else if (state.errorMessage.isNotEmpty()) {
+            item {
+                ErrorText(text = state.errorMessage)
             }
         }
     }
 }
+
