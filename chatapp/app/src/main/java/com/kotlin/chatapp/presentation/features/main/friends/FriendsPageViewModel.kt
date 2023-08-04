@@ -22,9 +22,12 @@ sealed class FriendsPageAction : ViewAction {
     data class SendRequest(val user_to_send_uuid: String) : FriendsPageAction()
     data class AcceptOrDecline(val user_to_send_uuid: String, val accept: Boolean) :
         FriendsPageAction()
+
     object GetUsers : FriendsPageAction()
     data class CreateChat(val friend_uuid: String) : FriendsPageAction()
 }
+
+enum class Tasks { GET_FRIENDS, GET_REQUESTS, GET_USERS, SEND_REQUEST, CREATE_CHAT, ACCEPT_OR_DECLINE, NONE }
 
 @HiltViewModel
 class FriendsPageViewModel @Inject constructor(
@@ -39,14 +42,20 @@ class FriendsPageViewModel @Inject constructor(
         val requests: List<UserModelDto> = emptyList(),
         val fetchedUsers: List<UserModelDto> = emptyList(),
         val isSuccess: IsSuccess = IsSuccess.NONE,
-        val errorMessage: String = "",
+        val task: Tasks = Tasks.NONE,
+        val getFriendsErrorMessage: String? = null,
+        val getRequestsErrorMessage: String? = null,
+        val getUsersErrorMessage: String? = null,
+        val sendRequestErrorMessage: String? = null,
+        val acceptOrDeclineErrorMessage: String? = null,
+        val createChatErrorMessage: String? = null,
         val searchQuery: String = "",
         val chatInfo: ChatInfo? = null,
         val chatCreated: Boolean = false
     ) : ViewState
 
     private fun fetchFriends() {
-        commit(state.value.copy(isSuccess = IsSuccess.LOADING))
+        commit(state.value.copy(isSuccess = IsSuccess.LOADING, task = Tasks.GET_FRIENDS))
         viewModelScope.launch {
             val response = chatAppService.getFriends(
                 user_uuid = state.value.user_uuid,
@@ -66,7 +75,8 @@ class FriendsPageViewModel @Inject constructor(
                     commit(
                         state.value.copy(
                             isSuccess = IsSuccess.ERROR,
-                            errorMessage = response.data?.message ?: "Unknown error!"
+                            getFriendsErrorMessage = response.message ?: "Server side error!",
+                            task = Tasks.NONE
                         )
                     )
                 }
@@ -75,7 +85,7 @@ class FriendsPageViewModel @Inject constructor(
     }
 
     private fun fetchRequests() {
-        commit(state.value.copy(isSuccess = IsSuccess.LOADING))
+        commit(state.value.copy(isSuccess = IsSuccess.LOADING, task = Tasks.GET_REQUESTS))
         viewModelScope.launch {
             val response = chatAppService.getRequests(
                 user_uuid = state.value.user_uuid,
@@ -95,7 +105,9 @@ class FriendsPageViewModel @Inject constructor(
                     commit(
                         state.value.copy(
                             isSuccess = IsSuccess.ERROR,
-                            errorMessage = response.data?.message ?: "Unknown error!"
+                            getRequestsErrorMessage = response.message
+                                ?: "Server side error!",
+                            task = Tasks.NONE
                         )
                     )
                 }
@@ -104,7 +116,7 @@ class FriendsPageViewModel @Inject constructor(
     }
 
     private fun fetchUsers() {
-        commit(state.value.copy(isSuccess = IsSuccess.LOADING))
+        commit(state.value.copy(isSuccess = IsSuccess.LOADING, task = Tasks.GET_USERS))
         viewModelScope.launch {
             val response = chatAppService.getUsers(
                 user_uuid = state.value.user_uuid,
@@ -125,7 +137,8 @@ class FriendsPageViewModel @Inject constructor(
                     commit(
                         state.value.copy(
                             isSuccess = IsSuccess.ERROR,
-                            errorMessage = response.data?.message ?: "Unknown error!"
+                            getUsersErrorMessage = response.message ?: "Server side error!",
+                            task = Tasks.NONE
                         )
                     )
                 }
@@ -134,7 +147,7 @@ class FriendsPageViewModel @Inject constructor(
     }
 
     private fun sendRequest(user_to_send_uuid: String) {
-        commit(state.value.copy(isSuccess = IsSuccess.LOADING))
+        commit(state.value.copy(isSuccess = IsSuccess.LOADING, task = Tasks.SEND_REQUEST))
         viewModelScope.launch {
             val response = chatAppService.sendRequest(
                 user_uuid = user_to_send_uuid,
@@ -154,7 +167,9 @@ class FriendsPageViewModel @Inject constructor(
                     commit(
                         state.value.copy(
                             isSuccess = IsSuccess.ERROR,
-                            errorMessage = response.data?.message ?: "Unknown error!"
+                            sendRequestErrorMessage = response.message
+                                ?: "Server side error!",
+                            task = Tasks.NONE
                         )
                     )
                 }
@@ -163,7 +178,7 @@ class FriendsPageViewModel @Inject constructor(
     }
 
     private fun acceptOrDecline(user_to_send_uuid: String, accept: Boolean) {
-        commit(state.value.copy(isSuccess = IsSuccess.LOADING))
+        commit(state.value.copy(isSuccess = IsSuccess.LOADING, task = Tasks.ACCEPT_OR_DECLINE))
         viewModelScope.launch {
             val reqBody = SendRequestModel(
                 user_uuid = state.value.user_uuid,
@@ -184,7 +199,9 @@ class FriendsPageViewModel @Inject constructor(
                     commit(
                         state.value.copy(
                             isSuccess = IsSuccess.ERROR,
-                            errorMessage = response.data?.message ?: "Unknown error!"
+                            acceptOrDeclineErrorMessage = response.message
+                                ?: "Server side error!",
+                            task = Tasks.NONE
                         )
                     )
                 }
@@ -193,7 +210,7 @@ class FriendsPageViewModel @Inject constructor(
     }
 
     private fun createChat(friend_uuid: String) {
-        commit(state.value.copy(isSuccess = IsSuccess.LOADING))
+        commit(state.value.copy(isSuccess = IsSuccess.LOADING, task = Tasks.CREATE_CHAT))
         viewModelScope.launch {
             val reqBody = CreateChatModel(
                 user_uuid = state.value.user_uuid,
@@ -215,7 +232,8 @@ class FriendsPageViewModel @Inject constructor(
                     commit(
                         state.value.copy(
                             isSuccess = IsSuccess.ERROR,
-                            errorMessage = response.data?.message ?: "Unknown error!"
+                            createChatErrorMessage = response.message ?: "Server side error!",
+                            task = Tasks.NONE
                         )
                     )
                 }
@@ -232,6 +250,7 @@ class FriendsPageViewModel @Inject constructor(
                 action.user_to_send_uuid,
                 action.accept
             )
+
             is FriendsPageAction.GetUsers -> fetchUsers()
             is FriendsPageAction.CreateChat -> createChat(action.friend_uuid)
         }

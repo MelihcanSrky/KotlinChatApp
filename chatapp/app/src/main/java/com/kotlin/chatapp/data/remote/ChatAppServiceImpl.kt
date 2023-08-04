@@ -11,6 +11,7 @@ import com.kotlin.chatapp.domain.model.ChatCreatedModel
 import com.kotlin.chatapp.domain.model.ChatsModel
 import com.kotlin.chatapp.domain.model.CreateChatModel
 import com.kotlin.chatapp.domain.model.CreateUser
+import com.kotlin.chatapp.domain.model.ErrorExceptionModel
 import com.kotlin.chatapp.domain.model.FriendsModel
 import com.kotlin.chatapp.domain.model.LoginUserModel
 import com.kotlin.chatapp.domain.model.LoginUserResponse
@@ -20,6 +21,7 @@ import com.kotlin.chatapp.domain.model.SendRequestModel
 import com.kotlin.chatapp.storage.SharedPrefs
 import com.kotlin.chatapp.utils.Resource
 import io.ktor.client.HttpClient
+import io.ktor.client.features.ResponseException
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.headers
@@ -27,10 +29,14 @@ import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.url
+import io.ktor.client.statement.readText
+import io.ktor.client.statement.response
 import io.ktor.client.utils.EmptyContent.contentType
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 
 class ChatAppServiceImpl(
     private val client: HttpClient,
@@ -202,11 +208,11 @@ class ChatAppServiceImpl(
             }
             when (response.status) {
                 201 -> Resource.Success(response)
-                else -> Resource.Error(response.message)
+                else -> Resource.Error(message = response.message)
             }
-        } catch (e: Exception) {
-            println(e.localizedMessage)
-            Resource.Error("Something went wrong!")
+        } catch (e: ResponseException) {
+            val objMessage = DecodeException(e)
+            Resource.Error(objMessage)
         }
     }
 
@@ -229,4 +235,8 @@ class ChatAppServiceImpl(
             Resource.Error("Something went wrong!")
         }
     }
+}
+
+internal suspend fun DecodeException(e: ResponseException) : String {
+    return Json.decodeFromString<ErrorExceptionModel>(e.response.call.response.readText()).message
 }
