@@ -1,6 +1,7 @@
 package com.kotlin.chatapp.presentation.features.main.friends
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,7 +16,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -40,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.kotlin.chatapp.data.remote.dto.UserModelDto
+import com.kotlin.chatapp.domain.model.TaskStateModel
 import com.kotlin.chatapp.presentation.features.main.friends.components.FetchedUsersListTile
 import com.kotlin.chatapp.presentation.features.main.friends.components.FriendsListTile
 import com.kotlin.chatapp.presentation.features.main.friends.components.RequestsListTile
@@ -70,11 +74,11 @@ fun FriendsPage(
             val user_uuid = SharedPrefs.getInstance(ctx).user_uuid
             viewModel.commit(state.copy(user_uuid = user_uuid, token = token))
         }
-        if (state.isSuccess == IsSuccess.NONE && state.token != "") {
+        if (state.getFriendsState.isSuccess == IsSuccess.NONE && state.token != "") {
             viewModel.dispatch(FriendsPageAction.GetFriends)
             viewModel.dispatch(FriendsPageAction.GetRequests)
         }
-        if (state.isSuccess == IsSuccess.SUCCESS && state.chatCreated && state.chatInfo != null) {
+        if (state.createChatState.isSuccess == IsSuccess.SUCCESS && state.chatCreated && state.chatInfo != null) {
             navController.navigate(Screens.ChatPage.route + "/${state.chatInfo.chat_uuid}/${state.chatInfo.chatname}")
         }
     }
@@ -121,31 +125,98 @@ fun FriendsPage(
                 FetchedUsersListTile(user = user, viewModel = viewModel)
             }
         }
-        if (state.requests.isNotEmpty()) {
-            item {
+
+        item {
+            Spacer(modifier = Modifier.height(16.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
                 Text(
                     text = "Requests",
                     style = ChatAppTypo.headlineSmall,
                     color = MaterialTheme.colorScheme.onTertiary
                 )
-                Divider(color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.2f))
+                IconButton(onClick = {
+                    viewModel.dispatch(FriendsPageAction.GetRequests)
+                }, enabled = (state.getFriendsState.isSuccess != IsSuccess.LOADING)) {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        tint = if (state.getFriendsState.errorMessage.isNullOrEmpty()) MaterialTheme.colorScheme.onTertiary else MaterialTheme.colorScheme.error,
+                        contentDescription = "getRequestsReload"
+                    )
+                }
             }
+            Divider(color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.2f))
+        }
+        if (state.getRequestsState.isSuccess == IsSuccess.ERROR) {
+            item {
+                Text(
+                    text = state.getRequestsState.errorMessage!!,
+                    style = ChatAppTypo.headlineSmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+        } else if (state.getRequestsState.isSuccess == IsSuccess.SUCCESS && state.requests.isNotEmpty()) {
             items(state.requests) { sender ->
                 RequestsListTile(sender, viewModel)
             }
-        }
-        if (state.friends.isNotEmpty()) {
+        } else if (state.getRequestsState.isSuccess == IsSuccess.SUCCESS && state.requests.isEmpty()) {
             item {
-                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "Empty for now!",
+                    style = ChatAppTypo.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(16.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
                 Text(
                     text = "Friends",
                     style = ChatAppTypo.headlineSmall,
                     color = MaterialTheme.colorScheme.onTertiary
                 )
-                Divider(color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.2f))
+                IconButton(onClick = {
+                    viewModel.dispatch(FriendsPageAction.GetFriends)
+                    viewModel.commit(state.copy(createChatState = TaskStateModel()))
+                }, enabled = (state.getFriendsState.isSuccess != IsSuccess.LOADING)) {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        tint = if (state.getFriendsState.errorMessage.isNullOrEmpty()) MaterialTheme.colorScheme.onTertiary else MaterialTheme.colorScheme.error,
+                        contentDescription = "getFriendsReload"
+                    )
+                }
             }
+            Divider(color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.2f))
+        }
+
+        if (state.getFriendsState.isSuccess == IsSuccess.ERROR) {
+            item {
+                Text(
+                    text = state.getFriendsState.errorMessage!!,
+                    style = ChatAppTypo.headlineSmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+        } else if (state.getFriendsState.isSuccess == IsSuccess.SUCCESS && state.friends.isNotEmpty()) {
             items(state.friends) { friend ->
                 FriendsListTile(friend = friend, viewModel = viewModel)
+            }
+        } else if (state.getFriendsState.isSuccess == IsSuccess.SUCCESS && state.friends.isEmpty()) {
+            item {
+                Text(
+                    text = "Add Friends now!",
+                    style = ChatAppTypo.headlineSmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
             }
         }
     }

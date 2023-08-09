@@ -35,6 +35,8 @@ interface ChatAppService {
 
     suspend fun getUsers(user_uuid: String, token: String, searchQuery: String) : Resource<FriendsModel>
 
+    suspend fun deleteFriend(reqBody: CreateChatModel, token: String) : Resource<FriendsModel>
+
 
     companion object {
         const val BASE_URL = "http://192.168.1.86:5000"
@@ -51,5 +53,6 @@ interface ChatAppService {
         object AcceptOrDecline : Endpoints("$BASE_URL/api/friends/accept")
         object CreateChat : Endpoints("$BASE_URL/api/chats/create")
         object GetUsers : Endpoints("$BASE_URL/api/users/{user_uuid}")
+        object DeleteUser : Endpoints("$BASE_URL/api/friends/delete")
     }
 }

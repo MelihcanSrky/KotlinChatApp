@@ -11,7 +11,7 @@ const getFriends = async (req, res, next) => {
         res.status(200).json({
             status: 200,
             message: 'Friends fetched successfully',
-            data: friends.rows
+            data: friends.rows.length > 0 ? friends.rows : null
         })
     } catch (error) {
         next(error);

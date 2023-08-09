@@ -60,7 +60,7 @@ class LoginPageViewModel @Inject constructor(
                     commit(
                         state.value.copy(
                             isSuccess = IsSuccess.ERROR,
-                            errorMessage = response.data?.message ?: "Unknown error!"
+                            errorMessage = response.message ?: "Unknown error!"
                         )
                     )
                 }

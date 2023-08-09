@@ -22,6 +22,7 @@ import com.kotlin.chatapp.storage.SharedPrefs
 import com.kotlin.chatapp.utils.Resource
 import io.ktor.client.HttpClient
 import io.ktor.client.features.ResponseException
+import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.headers
@@ -35,6 +36,7 @@ import io.ktor.client.utils.EmptyContent.contentType
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
+import io.ktor.network.sockets.ConnectTimeoutException
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 
@@ -55,9 +57,8 @@ class ChatAppServiceImpl(
                 401 -> Resource.Error("Username already exists!")
                 else -> Resource.Error("Something went wrong!")
             }
-        } catch (e: Exception) {
-            println(e.localizedMessage)
-            Resource.Error("Username already exists!")
+        } catch (e: Throwable) {
+            Resource.Error(e.ResolveError())
         }
     }
 
@@ -73,8 +74,8 @@ class ChatAppServiceImpl(
                 200 -> Resource.Success(response)
                 else -> Resource.Error(response.message)
             }
-        } catch (e: Exception) {
-            Resource.Error("Something went wrong!")
+        } catch (e: Throwable) {
+            Resource.Error(e.ResolveError())
         }
     }
 
@@ -93,9 +94,8 @@ class ChatAppServiceImpl(
                 200 -> Resource.Success(response.toChats())
                 else -> Resource.Error(response.message)
             }
-        } catch (e: Exception) {
-            println(e.localizedMessage)
-            Resource.Error("Something went wrong!")
+        } catch (e: Throwable) {
+            Resource.Error(e.ResolveError())
         }
     }
 
@@ -110,8 +110,8 @@ class ChatAppServiceImpl(
                 200 -> Resource.Success(response)
                 else -> Resource.Error(response.message)
             }
-        } catch (e: Exception) {
-            Resource.Error("Something went wrong!")
+        } catch (e: Throwable) {
+            Resource.Error(e.ResolveError())
         }
     }
 
@@ -126,8 +126,8 @@ class ChatAppServiceImpl(
                 200 -> Resource.Success(response)
                 else -> Resource.Error(response.message)
             }
-        } catch (e: Exception) {
-            Resource.Error("Something went wrong!")
+        } catch (e: Throwable) {
+            Resource.Error(e.ResolveError())
         }
     }
 
@@ -142,8 +142,8 @@ class ChatAppServiceImpl(
                 200 -> Resource.Success(response.toMessagesModel())
                 else -> Resource.Error(response.message)
             }
-        } catch (e: Exception) {
-            Resource.Error("Something went wrong!")
+        } catch (e: Throwable) {
+            Resource.Error(e.ResolveError())
         }
     }
 
@@ -166,9 +166,8 @@ class ChatAppServiceImpl(
                 201 -> Resource.Success(response)
                 else -> Resource.Error(response.message)
             }
-        } catch (e: Exception) {
-            println(e.localizedMessage)
-            Resource.Error("Something went wrong!")
+        } catch (e: Throwable) {
+            Resource.Error(e.ResolveError())
         }
     }
 
@@ -193,8 +192,8 @@ class ChatAppServiceImpl(
                 201 -> Resource.Success(response)
                 else -> Resource.Error(response.message)
             }
-        } catch (e: Exception) {
-            Resource.Error("Something went wrong!")
+        } catch (e: Throwable) {
+            Resource.Error(e.ResolveError())
         }
     }
 
@@ -210,9 +209,8 @@ class ChatAppServiceImpl(
                 201 -> Resource.Success(response)
                 else -> Resource.Error(message = response.message)
             }
-        } catch (e: ResponseException) {
-            val objMessage = DecodeException(e)
-            Resource.Error(objMessage)
+        } catch (e: Throwable) {
+            Resource.Error(e.ResolveError())
         }
     }
 
@@ -231,8 +229,42 @@ class ChatAppServiceImpl(
                 200 -> Resource.Success(response)
                 else -> Resource.Error(response.message)
             }
-        } catch (e: Exception) {
-            Resource.Error("Something went wrong!")
+        } catch (e: Throwable) {
+            Resource.Error(e.ResolveError())
+        }
+    }
+
+    override suspend fun deleteFriend(
+        reqBody: CreateChatModel,
+        token: String
+    ): Resource<FriendsModel> {
+        return try {
+            val url = ChatAppService.Endpoints.DeleteUser.url
+            val response = client.delete<FriendsModel>(url) {
+                headers {
+                    append(HttpHeaders.Authorization, token)
+                }
+                body = reqBody
+                contentType(ContentType.Application.Json)
+            }
+            Resource.Success(response)
+        } catch (e: Throwable) {
+            Resource.Error(e.ResolveError())
+        }
+    }
+}
+
+internal suspend fun Throwable.ResolveError() : String {
+    return when (this) {
+        is ResponseException -> {
+            val objMessage = DecodeException(this)
+            objMessage
+        }
+        is ConnectTimeoutException -> {
+            "Connection timeout!"
+        }
+        else -> {
+            "Unknown error!"
         }
     }
 }

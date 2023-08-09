@@ -11,6 +11,7 @@ const { getChat } = require('../controllers/chats/getChat');
 const { createChat } = require('../controllers/chats/createChat');
 const { getMessages } = require('../controllers/messages/getMessages');
 const { sendMessage } = require('../controllers/messages/sendMessage');
+const { deleteFriend } = require('../controllers/friends/deleteFriend');
 const router = express.Router();
 
 router.post("/users/create", createUser);
@@ -22,6 +23,7 @@ router.get("/requests", verifyToken, getRequests);
 router.get("/friends", verifyToken, getFriends);
 router.post("/friends/send", verifyToken, sendRequest);
 router.put("/friends/accept", verifyToken, acceptOrDecline);
+router.delete("/friends/delete", verifyToken, deleteFriend);
 
 router.get("/chats", verifyToken, getChat);
 router.post("/chats/create", verifyToken, createChat);
