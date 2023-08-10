@@ -79,7 +79,10 @@ fun FriendsPage(
             viewModel.dispatch(FriendsPageAction.GetRequests)
         }
         if (state.createChatState.isSuccess == IsSuccess.SUCCESS && state.chatCreated && state.chatInfo != null) {
-            navController.navigate(Screens.ChatPage.route + "/${state.chatInfo.chat_uuid}/${state.chatInfo.chatname}")
+            viewModel.commit(state.copy(createChatState = TaskStateModel()))
+            navController.navigate(Screens.ChatPage.route + "/${state.chatInfo.chat_uuid}/${state.chatInfo.chatname}") {
+                popUpTo(Screens.ChatsPage.route)
+            }
         }
     }
 

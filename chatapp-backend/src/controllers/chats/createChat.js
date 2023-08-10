@@ -38,10 +38,17 @@ const createChat = async (req, res, next) => {
 				[user_uuid, friend_uuid, me.rows[0].username, friend.rows[0].username]
 			);
 			if (chatExists.rows[0].count > 0) {
-				return res.status(409).json({
-					status: 409,
+				const chat = await client.query(
+					"SELECT * FROM chats WHERE user_uuid = $1 and chatname = $2",
+					[user_uuid, friend.rows[0].username]
+				)
+				return res.status(200).json({
+					status: 200,
 					message: 'chat already exists',
-					data: null
+					data: {
+						chat_uuid: chat.rows[0].chat_uuid,
+						chatname: friend.rows[0].username
+					}
 				})
 			}
 

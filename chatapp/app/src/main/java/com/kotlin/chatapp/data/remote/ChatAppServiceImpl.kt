@@ -205,10 +205,7 @@ class ChatAppServiceImpl(
                 body = reqBody
                 contentType(ContentType.Application.Json)
             }
-            when (response.status) {
-                201 -> Resource.Success(response)
-                else -> Resource.Error(message = response.message)
-            }
+            Resource.Success(response)
         } catch (e: Throwable) {
             Resource.Error(e.ResolveError())
         }

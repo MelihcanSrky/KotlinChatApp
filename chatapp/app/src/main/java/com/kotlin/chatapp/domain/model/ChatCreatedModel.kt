@@ -12,7 +12,5 @@ data class ChatCreatedModel(
 @Serializable
 data class ChatInfo(
     val chat_uuid: String,
-    val user_uuid: String,
     val chatname: String,
-    val created_at: Long
 )
